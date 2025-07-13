@@ -15,9 +15,19 @@ from .models import User
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def create_app():
+def create_app(testing=False):
+    """
+    Flask app factory. If testing=True, use in-memory SQLite and set TESTING config.
+    """
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+    
+    if testing:
+        app.config["TESTING"] = True
+        app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///:memory:'
+    else:
+        app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+        app.config["TESTING"] = False
+    
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 

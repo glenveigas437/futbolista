@@ -1,7 +1,7 @@
 """Deleted Users from Prediction
 
 Revision ID: d694cb15c307
-Revises: b338b903f763
+Revises: b6f7f158d6a3
 Create Date: 2025-07-12 20:29:45.419211
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'd694cb15c307'
-down_revision = 'b338b903f763'
+down_revision = 'b6f7f158d6a3'
 branch_labels = None
 depends_on = None
 

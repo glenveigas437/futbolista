@@ -9,6 +9,7 @@ from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from sqlalchemy import func
+import random
 
 api_v1 = Blueprint('api_v1', __name__)
 
@@ -117,9 +118,17 @@ def api_search_and_add_team(user_id):
 
     existing = Team.query.filter_by(name=team_name).first()
     if existing:
-        return jsonify({'team': {'id': existing.id, 'name': existing.name, 'logo_url': existing.logo_url, 'stadium': existing.stadium, 'favourite': existing.favourite}, 'added': False})
+        # Check if favourited by this user
+        fav = FavouriteTeam.query.filter_by(user_id=user_id, team_id=existing.id).first()
+        return jsonify({'team': {'id': existing.id, 'name': existing.name, 'logo_url': existing.logo_url, 'stadium': existing.stadium, 'favourite': bool(fav)}, 'added': False})
 
-    new_team = Team(name=team_name, logo_url=None, stadium=None)
+    # For user-added teams, generate a unique ID (negative to avoid conflicts with Football-Data.org IDs)
+    while True:
+        new_id = -random.randint(1000, 9999)
+        if not Team.query.get(new_id):
+            break
+    
+    new_team = Team(id=new_id, name=team_name, logo_url=None, stadium=None, favourite=False)
     try:
         db.session.add(new_team)
         db.session.commit()
@@ -127,7 +136,7 @@ def api_search_and_add_team(user_id):
         db.session.rollback()
         return jsonify({'error': 'Team already exists'}), 409
 
-    return jsonify({'team': {'id': new_team.id, 'name': new_team.name, 'logo_url': new_team.logo_url, 'stadium': new_team.stadium, 'favourite': new_team.favourite}, 'added': True})
+    return jsonify({'team': {'id': new_team.id, 'name': new_team.name, 'logo_url': new_team.logo_url, 'stadium': new_team.stadium, 'favourite': False}, 'added': True})
 
 @api_v1.route('/teams/<int:team_id>/favourite', methods=['POST'])
 @jwt_required
@@ -176,16 +185,25 @@ def api_relevant_matches(user_id):
 @jwt_required
 def api_add_prediction(user_id):
     data = request.get_json()
-    match_id = data['match_id']
-    predicted_result = f"{data['home_score']}-{data['away_score']}"
+    # Validate required fields
+    match_id = data.get('match_id')
+    home_score = data.get('home_score')
+    away_score = data.get('away_score')
+    if match_id is None or home_score is None or away_score is None:
+        return jsonify({'error': 'match_id, home_score, and away_score are required'}), 400
+    # Check if match exists
+    match = Match.query.get(match_id)
+    if not match:
+        return jsonify({'error': 'Invalid match_id'}), 400
+    # Check for duplicate prediction
+    existing = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
+    if existing:
+        return jsonify({'error': 'Prediction already exists for this match'}), 400
+    predicted_result = f"{home_score}-{away_score}"
     prediction = Prediction(user_id=user_id, match_id=match_id, predicted_result=predicted_result)
     db.session.add(prediction)
-    try:
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({'error': 'Invalid match_id or database integrity error.'}), 400
-    return jsonify({'success': True})
+    db.session.commit()
+    return jsonify({'success': True, 'prediction_id': prediction.id})
 
 @api_v1.route('/predictions', methods=['GET'])
 @jwt_required
@@ -248,29 +266,25 @@ def register():
     password = data.get('password')
     if not username or not password:
         return jsonify({'error': 'Username and password required'}), 400
-    if Team.query.filter_by(name=username).first():
+    if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already exists'}), 409
-    from ..models import User
-    hashed_pw = generate_password_hash(password)
-    user = User(username=username, password_hash=hashed_pw)
+    user = User(username=username, password_hash=generate_password_hash(password), score=0)
     db.session.add(user)
     db.session.commit()
-    return jsonify({'message': 'User registered successfully'})
+    return jsonify({'success': True, 'user_id': user.id})
 
 @api_v1.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    from ..models import User
+    if not username or not password:
+        return jsonify({'error': 'Username and password required'}), 400
     user = User.query.filter_by(username=username).first()
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'error': 'Invalid credentials'}), 401
-    token = jwt.encode({
-        'user_id': user.id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-    }, current_app.config['SECRET_KEY'], algorithm='HS256')
-    return jsonify({'token': token})
+    token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, current_app.config['SECRET_KEY'], algorithm='HS256')
+    return jsonify({'token': token, 'user_id': user.id})
 
 @api_v1.route('/leagues', methods=['GET'])
 @jwt_required

@@ -15,7 +15,7 @@ class FootballDataOrgScraper:
         team = Team.query.filter(Team.name.ilike(team_name)).first()
         if not team:
             return []
-        team_id = team.fd_team_id
+        team_id = team.id  # Use the primary key as the Football-Data.org team ID
         if not team_id:
             return []
         # 2. Get league and fd_competition
