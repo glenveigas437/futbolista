@@ -19,6 +19,7 @@ pipeline {
                 sh './venv/bin/pip install pytest'
                 sh './venv/bin/pytest tests'
             }
+
         }
         stage('Deploy') {
             when {
@@ -42,3 +43,4 @@ pipeline {
         }
     }
 } 
+
