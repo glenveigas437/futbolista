@@ -1,0 +1,151 @@
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 2em;
+    background: #f8f9fa;
+}
+nav {
+    background: #fff;
+    padding: 1em 2em;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 2em;
+}
+nav a {
+    margin-right: 2em;
+    text-decoration: none;
+    color: #222;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+nav a:hover {
+    color: #007bff;
+}
+h2 {
+    color: #198754;
+    margin-top: 0.5em;
+}
+
+form#team-search-form {
+    display: flex;
+    gap: 0.5em;
+    margin-bottom: 1em;
+}
+form#team-search-form input[type="text"] {
+    padding: 0.5em 1em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    flex: 1;
+}
+form#team-search-form button {
+    padding: 0.5em 1.5em;
+    background: #198754;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+form#team-search-form button:hover {
+    background: #145c32;
+}
+
+/* Pagination styles */
+#pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1em;
+}
+#pagination-controls a {
+    display: inline-block;
+    padding: 0.4em 1em;
+    margin: 0 0.2em;
+    background: #fff;
+    color: #198754;
+    border: 1px solid #198754;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+#pagination-controls a:hover {
+    background: #198754;
+    color: #fff;
+}
+#pagination-controls span {
+    margin: 0 0.5em;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Table styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+table th, table td {
+    padding: 1em;
+    text-align: left;
+}
+table th {
+    background: #e9ecef;
+    font-weight: 600;
+}
+table tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table tr:hover {
+    background: #e3f2fd;
+}
+td img {
+    vertical-align: middle;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 700px) {
+    nav {
+        padding: 1em 0.5em;
+    }
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    table th {
+        display: none;
+    }
+    table td {
+        padding: 0.7em 0.5em;
+        border-bottom: 1px solid #eee;
+    }
+    table tr {
+        margin-bottom: 1em;
+        background: #fff !important;
+    }
+}
+
+/* Flash messages */
+.flashes {
+    margin-bottom: 1em;
+}
+.flashes .success {
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+    padding: 0.7em 1em;
+    border-radius: 4px;
+    margin-bottom: 0.5em;
+}
+.flashes .danger {
+    background: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+    padding: 0.7em 1em;
+    border-radius: 4px;
+    margin-bottom: 0.5em;
+} 

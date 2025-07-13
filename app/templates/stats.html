@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Stats</h2>
+<div class="row mb-4">
+  <div class="col-md-6">
+    <h4>Your Stats</h4>
+    <ul id="user-stats-list"></ul>
+  </div>
+  <div class="col-md-6">
+    <h4>Team Stats</h4>
+    <select id="team-select" class="form-select mb-2"><option value="">Select a team</option></select>
+    <ul id="team-stats-list"></ul>
+  </div>
+</div>
+<script>
+async function fetchUserStats() {
+  // Get user id from JWT
+  const token = getToken();
+  if (!token) return;
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  const userId = payload.user_id;
+  const res = await fetch(`/api/v1/user/${userId}/stats`);
+  const data = await res.json();
+  document.getElementById('user-stats-list').innerHTML = `
+    <li>Total Predictions: <b>${data.total_predictions}</b></li>
+    <li>Correct Predictions: <b>${data.correct_predictions}</b></li>
+  `;
+}
+async function fetchTeams() {
+  const res = await fetch('/api/v1/teams?per_page=100');
+  const data = await res.json();
+  const select = document.getElementById('team-select');
+  data.teams.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name;
+    select.appendChild(opt);
+  });
+}
+async function fetchTeamStats(teamId) {
+  if (!teamId) {
+    document.getElementById('team-stats-list').innerHTML = '';
+    return;
+  }
+  const res = await fetch(`/api/v1/team/${teamId}/stats`);
+  const data = await res.json();
+  document.getElementById('team-stats-list').innerHTML = `
+    <li>Matches Played: <b>${data.played}</b></li>
+    <li>Wins: <b>${data.wins}</b></li>
+    <li>Losses: <b>${data.losses}</b></li>
+    <li>Draws: <b>${data.draws}</b></li>
+  `;
+}
+document.getElementById('team-select').onchange = function() {
+  fetchTeamStats(this.value);
+};
+fetchUserStats();
+fetchTeams();
+</script>
+{% endblock %} 

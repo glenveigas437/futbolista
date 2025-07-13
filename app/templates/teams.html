@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Teams</h2>
+<form id="team-filter-form" class="row g-3 mb-3">
+  <div class="col-auto">
+    <select id="league-select" class="form-select">
+      <option value="">All Leagues</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <input type="text" id="team-search" class="form-control" placeholder="Search teams...">
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </div>
+</form>
+<div class="row" id="teams-cards"></div>
+<nav>
+  <ul class="pagination" id="pagination-controls"></ul>
+</nav>
+<script>
+let currentPage = 1, totalPages = 1;
+let leagueMap = {};
+async function fetchLeagues() {
+  const res = await fetch('/api/v1/leagues');
+  const leagues = await res.json();
+  const select = document.getElementById('league-select');
+  leagues.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.name;
+    select.appendChild(opt);
+    leagueMap[l.id] = l.name;
+  });
+}
+async function fetchTeams(page=1) {
+  const leagueId = document.getElementById('league-select').value;
+  const search = document.getElementById('team-search').value;
+  let url = `/api/v1/teams?page=${page}&per_page=10`;
+  if (leagueId) url += `&league_id=${leagueId}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const cards = document.getElementById('teams-cards');
+  cards.innerHTML = '';
+  data.teams.forEach(t => {
+    const leagueName = t.league_id && leagueMap[t.league_id] ? leagueMap[t.league_id] : '';
+    cards.innerHTML += `<div class='col-md-6 col-lg-4 mb-4'><div class='card shadow-lg' style='background:rgba(255,255,255,0.7);border-radius:1em;'>
+      <div class='card-body text-center'>
+        <div class='mb-2'>${t.logo_url ? `<img src='${t.logo_url}' alt='logo' style='width:60px;height:60px;border-radius:50%;box-shadow:0 2px 8px #222;'>` : '<span style="font-size:2em;">⚽</span>'}</div>
+        <h5 class='card-title mb-1'>${t.name}</h5>
+        <div class='mb-2 text-warning'>${t.stadium || ''}</div>
+        <div class='mb-2'><span class='badge bg-secondary'>League: ${leagueName}</span></div>
+        <div><span class="favourite-star" data-team-id="${t.id}" style="cursor:pointer;font-size:2em;">${t.favourite ? '⭐' : '☆'}</span></div>
+      </div>
+    </div></div>`;
+  });
+  // Pagination
+  currentPage = data.page; totalPages = data.pages;
+  const pag = document.getElementById('pagination-controls');
+  pag.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    pag.innerHTML += `<li class="page-item${i===currentPage?' active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+  }
+  document.querySelectorAll('#pagination-controls a').forEach(a => {
+    a.onclick = e => { e.preventDefault(); fetchTeams(Number(a.dataset.page)); };
+  });
+  // Add favourite star click listeners
+  document.querySelectorAll('.favourite-star').forEach(star => {
+    star.onclick = async function() {
+      const teamId = this.getAttribute('data-team-id');
+      const isFavourited = this.textContent === '⭐';
+      if (isFavourited) {
+        await fetch(`/api/v1/teams/${teamId}/favourite`, { method: 'DELETE' });
+      } else {
+        await fetch(`/api/v1/teams/${teamId}/favourite`, { method: 'POST' });
+      }
+      fetchTeams(currentPage);
+    };
+  });
+}
+document.getElementById('team-filter-form').onsubmit = e => { e.preventDefault(); fetchTeams(1); };
+document.getElementById('team-search').oninput = () => { fetchTeams(1); };
+fetchLeagues().then(() => fetchTeams());
+</script>
+{% endblock %} 

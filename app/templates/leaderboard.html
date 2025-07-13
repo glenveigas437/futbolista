@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Leaderboard</h2>
+<table class="table table-striped" id="leaderboard-table">
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Username</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<script>
+async function fetchLeaderboard() {
+  const res = await fetch('/api/v1/leaderboard');
+  const data = await res.json();
+  const tbody = document.querySelector('#leaderboard-table tbody');
+  tbody.innerHTML = '';
+  data.forEach((u, i) => {
+    tbody.innerHTML += `<tr><td>${i+1}</td><td>${u.username}</td><td>${u.score}</td></tr>`;
+  });
+}
+fetchLeaderboard();
+</script>
+{% endblock %} 
