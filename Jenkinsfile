@@ -17,7 +17,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh './venv/bin/pip install pytest'
-                sh './venv/bin/pytest futbolista/tests'
+                sh './venv/bin/pytest tests'
             }
         }
         stage('Deploy') {
