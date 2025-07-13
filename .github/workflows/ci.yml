@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: futbolista_user
+          POSTGRES_PASSWORD: bIsEheInPLFduC0Ibcs6t10wIdLoRDZ7
+          POSTGRES_DB: futbolista
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U futbolista_user" \
+          --health-interval 10s \
+          --health-timeout 5s \
+          --health-retries 5
+
+    env:
+      SECRET_KEY: ci-secret-key-for-testing-only
+      SQLALCHEMY_DATABASE_URI: postgresql://futbolista_user:bIsEheInPLFduC0Ibcs6t10wIdLoRDZ7@localhost:5432/futbolista
+      FOOTBALL_DATA_API_KEY: dummy-key
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Wait for PostgreSQL
+      run: |
+        until pg_isready -h localhost -U futbolista_user; do sleep 1; done
+
+    - name: Run migrations (if any)
+      run: |
+        if [ -d "migrations" ]; then
+          flask db upgrade || true
+        fi
+      env:
+        FLASK_APP: app.py
+        FLASK_ENV: development
+
+    - name: Run tests
+      run: pytest 
