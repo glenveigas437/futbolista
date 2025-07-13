@@ -8,13 +8,13 @@ pipeline {
             steps {
                 sh 'python3 -m venv $VENV'
                 sh './venv/bin/pip install --upgrade pip'
-                sh './venv/bin/pip install -r futbolista/requirements.txt'
+                sh './venv/bin/pip install -r requirements.txt'
             }
         }
         stage('Test') {
             steps {
                 sh './venv/bin/pip install pytest'
-                sh './venv/bin/pytest futbolista/tests'
+                sh './venv/bin/pytest tests'
             }
         }
         stage('Deploy') {
