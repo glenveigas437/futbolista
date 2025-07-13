@@ -2,11 +2,14 @@ pipeline {
     agent any
     environment {
         VENV = 'venv'
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
     stages {
         stage('Build') {
             steps {
-                sh 'python3.11 -m venv $VENV'
+                sh 'which /usr/local/bin/python3.11 || which python3'
+                sh '/usr/local/bin/python3.11 --version || python3 --version'
+                sh '/usr/local/bin/python3.11 -m venv $VENV || python3 -m venv $VENV'
                 sh './venv/bin/pip install --upgrade pip'
                 sh './venv/bin/pip install -r requirements.txt'
             }
@@ -14,7 +17,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh './venv/bin/pip install pytest'
-                sh './venv/bin/pytest tests'
+                sh './venv/bin/pytest futbolista/tests'
             }
         }
         stage('Deploy') {
